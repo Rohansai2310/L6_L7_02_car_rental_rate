@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 7: Fuzz Testing Report</title>
+  <style>
+    @page { size: A4; margin: 16mm; }
+    body { font-family: Arial, sans-serif; color: #1f2937; line-height: 1.42; }
+    h1 { color: #0f3d69; font-size: 24px; margin-bottom: 4px; }
+    h2 { color: #0f3d69; font-size: 17px; margin-top: 22px; }
+    .subtitle { margin-top: 0; color: #4b5563; }
+    .terminal { background: #111827; color: #e5e7eb; border-radius: 7px; padding: 14px; font-family: "DejaVu Sans Mono", monospace; font-size: 9px; line-height: 1.35; white-space: pre-wrap; }
+    .prompt { color: #86efac; }
+    .caption { font-size: 10px; color: #4b5563; margin-top: 5px; }
+    table { border-collapse: collapse; width: 100%; font-size: 10px; }
+    th, td { border: 1px solid #cbd5e1; padding: 7px; text-align: left; vertical-align: top; }
+    th { background: #eaf2fb; }
+    code { font-family: "DejaVu Sans Mono", monospace; }
+  </style>
+</head>
+<body>
+  <h1>Lab 7: Fuzzing for Input Validation Bugs</h1>
+  <p class="subtitle">Application: Car Rental Rate &middot; Technique: Hypothesis property-based testing</p>
+
+  <h2>Objective</h2>
+  <p>Use Hypothesis to generate unexpected inputs for the three processor functions, identify crashes, and harden the program so all generated text or <code>None</code> inputs are handled safely.</p>
+
+  <h2>Figure 1 &mdash; Initial fuzz-test failures</h2>
+  <div class="terminal"><span class="prompt">$ .venv/bin/python -m pytest test_processor.py -q</span>
+FFF
+FAILED test_sanitize_license_plate_no_crash
+  s = None -> AttributeError: 'NoneType' object has no attribute 'strip'
+FAILED test_parse_trip_mileage_safe
+  s = ''   -> ValueError: could not convert string to float: ''
+  s = None -> AttributeError: 'NoneType' object has no attribute 'split'
+FAILED test_format_rental_invoice_safe
+  s = ':'  -> ValueError: invalid literal for int() with base 10: ''
+  s = ''   -> IndexError: list index out of range
+  s = None -> AttributeError: 'NoneType' object has no attribute 'split'
+3 failed</div>
+  <p class="caption">Hypothesis minimized each failure to a small reproducible input.</p>
+
+  <h2>Fixes applied</h2>
+  <table>
+    <tr><th>Function</th><th>Defensive behaviour</th></tr>
+    <tr><td><code>sanitize_license_plate</code></td><td>Returns an empty string for non-text input before stripping delimiters.</td></tr>
+    <tr><td><code>parse_trip_mileage</code></td><td>Returns an empty list for non-text input; ignores blank, invalid, NaN, and infinite mileage fields while retaining valid finite values.</td></tr>
+    <tr><td><code>format_rental_invoice</code></td><td>Validates exactly three record parts, non-empty driver/category, and positive integral days. Invalid records return a clear message.</td></tr>
+  </table>
+
+  <h2>Figure 2 &mdash; Fixed application run</h2>
+  <div class="terminal"><span class="prompt">$ printf 'KA-01-AB_1234\n100.5, 45.2, invalid, , 80.0\nRohan:3:SUV\n' | .venv/bin/python processor.py</span>
+==== Running sanitize_license_plate ====
+Enter license plate with delimiters (-, _, #): Sanitized Plate: KA01AB1234
+
+==== Running parse_trip_mileage ====
+Enter CSV of mileages (e.g. 100.5, 45.2, 80.0): Parsed Mileage List: [100.5, 45.2, 80.0]
+
+==== Running format_rental_invoice ====
+Enter rental record (Driver:Days:Category): Rental Invoice: Driver Rohan booked SUV for 3 days: Total $150.00</div>
+
+  <h2>Figure 3 &mdash; Fuzz tests after the fix</h2>
+  <div class="terminal"><span class="prompt">$ .venv/bin/python -m pytest test_processor.py -q</span>
+...                                                                      [100%]
+3 passed in 0.17s</div>
+
+  <h2>Conclusion</h2>
+  <p>The completed property tests exercise every processor function against generated Unicode text and <code>None</code>. The processor no longer exposes parsing exceptions for malformed input and preserves expected results for valid records.</p>
+</body>
+</html>

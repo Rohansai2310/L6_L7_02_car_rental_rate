@@ -1,0 +1,73 @@
+%!PS-Adobe-3.0
+%%Title: Lab 7 Fuzz Testing Report
+%%Pages: 2
+%%PageOrder: Ascend
+%%EndComments
+
+/H { /Helvetica findfont exch scalefont setfont } bind def
+/M { /Courier findfont exch scalefont setfont } bind def
+/S { moveto currentfile token pop show } bind def
+/Line { newpath moveto lineto stroke } bind def
+/TermLine { /txt exch def /y exch def 56 y moveto txt show } bind def
+
+%%Page: 1 1
+%%BeginPageSetup
+<< /PageSize [595 842] >> setpagedevice
+%%EndPageSetup
+0.06 0.24 0.41 setrgbcolor 24 H 48 790 S (Lab 7: Fuzzing for Input Validation Bugs)
+0 setgray 11 H 48 768 S (Application: Car Rental Rate    Technique: Hypothesis property-based testing)
+0.06 0.24 0.41 setrgbcolor 15 H 48 730 S (Objective)
+0 setgray 10 H 48 712 S (Generate unexpected text and None inputs for all processor functions, identify failures,)
+48 698 S (and harden the application so malformed input never exposes parsing exceptions.)
+0.06 0.24 0.41 setrgbcolor 15 H 48 662 S (Figure 1 - Initial fuzz-test failures)
+0.07 setgray 45 405 505 238 rectfill
+0.86 0.95 0.88 setrgbcolor 9 M
+630 ( $ .venv/bin/python -m pytest test_processor.py -q) TermLine
+616 ( FFF) TermLine
+598 ( FAILED test_sanitize_license_plate_no_crash) TermLine
+584 (   s = None -> AttributeError: NoneType has no attribute strip) TermLine
+566 ( FAILED test_parse_trip_mileage_safe) TermLine
+552 (   s = ''   -> ValueError: could not convert string to float) TermLine
+538 (   s = None -> AttributeError: NoneType has no attribute split) TermLine
+520 ( FAILED test_format_rental_invoice_safe) TermLine
+506 (   s = ':'  -> ValueError: invalid literal for int) TermLine
+492 (   s = ''   -> IndexError: list index out of range) TermLine
+478 (   s = None -> AttributeError: NoneType has no attribute split) TermLine
+460 ( 3 failed) TermLine
+0 setgray 9 H 48 386 S (Hypothesis minimized each failure to a small, reproducible input.)
+0.06 0.24 0.41 setrgbcolor 15 H 48 348 S (Fuzz-test design)
+0 setgray 10 H 48 330 S (Each test uses @given(st.one_of(st.text(), st.none())) and verifies that its function)
+48 316 S (returns the expected result type without throwing an exception.)
+0.06 0.24 0.41 setrgbcolor 15 H 48 278 S (Defensive fixes)
+0 setgray 10 H 48 258 S (1. sanitize_license_plate returns an empty string for non-text input.)
+48 242 S (2. parse_trip_mileage ignores blank, invalid, NaN, and infinite numeric fields.)
+48 226 S (3. format_rental_invoice validates the complete record and positive integral rental days.)
+showpage
+
+%%Page: 2 2
+0.06 0.24 0.41 setrgbcolor 24 H 48 790 S (Lab 7: Fixed Application Evidence)
+0.06 0.24 0.41 setrgbcolor 15 H 48 750 S (Figure 2 - Fixed processor run)
+0.07 setgray 45 520 505 205 rectfill
+0.86 0.95 0.88 setrgbcolor 8 M
+710 ( ==== Running sanitize_license_plate ====) TermLine
+696 ( Enter license plate with delimiters: Sanitized Plate: KA01AB1234) TermLine
+674 ( ==== Running parse_trip_mileage ====) TermLine
+660 ( Parsed Mileage List: [100.5, 45.2, 80.0]) TermLine
+638 ( ==== Running format_rental_invoice ====) TermLine
+624 ( Rental Invoice: Driver Rohan booked SUV for 3 days: Total $150.00) TermLine
+0.06 0.24 0.41 setrgbcolor 15 H 48 482 S (Figure 3 - Fuzz tests after the fix)
+0.07 setgray 45 405 505 56 rectfill
+0.86 0.95 0.88 setrgbcolor 9 M
+442 ( $ .venv/bin/python -m pytest test_processor.py -q) TermLine
+426 ( ...                                                        [100%]) TermLine
+412 ( 3 passed in 0.17s) TermLine
+0.06 0.24 0.41 setrgbcolor 15 H 48 366 S (Conclusion)
+0 setgray 10 H 48 348 S (All three completed Hypothesis fuzz tests now pass. The processor safely handles)
+48 334 S (generated Unicode text and None input while retaining the expected valid rental workflow.)
+0.06 0.24 0.41 setrgbcolor 15 H 48 296 S (Commands used)
+0 setgray 9 M 48 278 S (python -m venv .venv)
+48 264 S (.venv/bin/pip install hypothesis pytest)
+48 250 S (.venv/bin/python processor.py)
+48 236 S (.venv/bin/python -m pytest test_processor.py -q)
+showpage
+%%EOF

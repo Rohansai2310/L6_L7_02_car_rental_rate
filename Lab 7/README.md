@@ -11,8 +11,20 @@ A set of property-based fuzz tests targeting vehicle license formatting, trip mi
 | File | Description |
 |------|-------------|
 | `processor.py` | The module under test (buggy starter code) |
-| `test_processor.py` | Starter test file to complete using Hypothesis |
+| `test_processor.py` | Completed Hypothesis fuzz tests |
+| `Lab_7_FuzzTesting_Report.pdf` | Submission report with terminal-output evidence |
 
-Keep all your Lab 7 work in this `LAB7` folder.
+## Run the lab
+
+```bash
+python -m venv .venv
+.venv/bin/pip install hypothesis pytest
+.venv/bin/python processor.py
+.venv/bin/python -m pytest test_processor.py -q
+```
+
+The processor accepts untrusted input safely: missing license plates produce an
+empty string, invalid mileage fields are skipped, and invalid rental records
+return a clear validation message.
 
 Refer to the lab handout for instructions.
